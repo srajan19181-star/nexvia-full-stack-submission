@@ -1,0 +1,45 @@
+name: CI
+on:
+  push:
+  pull_request:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env: { POSTGRES_USER: aureva, POSTGRES_PASSWORD: aureva_dev_password, POSTGRES_DB: aureva }
+        ports: ["5433:5432"]
+        options: >-
+          --health-cmd "pg_isready -U aureva" --health-interval 5s --health-timeout 5s --health-retries 12
+      redis:
+        image: redis:7.4-alpine
+        ports: ["6380:6379"]
+    env:
+      DATABASE_URL: postgresql://aureva:aureva_dev_password@localhost:5433/aureva
+      REDIS_URL: redis://localhost:6380
+      ELASTICSEARCH_URL: http://localhost:9201
+      JWT_ACCESS_SECRET: ci-access-secret-at-least-32-characters
+      JWT_REFRESH_SECRET: ci-refresh-secret-at-least-32-characters
+      COOKIE_SECRET: ci-cookie-secret-at-least-32-characters
+      S3_ENDPOINT: http://localhost:9000
+      S3_REGION: us-east-1
+      S3_BUCKET: aureva-products
+      S3_ACCESS_KEY: test
+      S3_SECRET_KEY: test-secret
+      CORS_ORIGINS: http://localhost:5174
+      WEB_URL: http://localhost:5174
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run db:generate
+      - run: npm run db:migrate:deploy
+      - run: npm run db:seed
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e

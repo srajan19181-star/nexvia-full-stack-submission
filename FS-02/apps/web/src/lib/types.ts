@@ -1,0 +1,4 @@
+export type User = { id:string; name:string; email:string; roles:("CUSTOMER"|"VENDOR"|"ADMIN")[]; avatarUrl?:string; vendor?:{id:string;status:string}|null };
+export type Product = { id:string; name:string; slug:string; description:string; averageRating:string|number; reviewCount:number; images:{url:string;altText:string}[]; variants:{id:string;name:string;price:number;compareAtPrice?:number|null;currency:string;inventory?:{quantity:number;reserved:number}}[]; vendor:{id:string;storeName:string;slug:string;processingDays?:number;returnPolicy?:string|null}; category:{name:string;slug:string}; brand?:{name:string}|null };
+export type Cart = { id:string; items:{id:string;quantity:number;productVariant:Product["variants"][number]&{product:Product}}[] };
+export type Category = { id:string;name:string;slug:string;description?:string;imageUrl?:string;_count:{products:number};children:Category[] };

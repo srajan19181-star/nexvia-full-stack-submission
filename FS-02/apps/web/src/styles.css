@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+:root { color-scheme: light; --canvas:#F5F0E8; --surface:#E8DFD2; --charcoal:#252923; --olive:#56634C; --copper:#B78A62; --ivory:#FCFAF6; --muted:#5F645C; --border:#D8D0C4; --success:#397451; --error:#B94D45; font-family: Manrope,"DM Sans",system-ui,sans-serif; color:var(--charcoal); background:var(--canvas); }
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { margin:0; min-width:320px; background:var(--canvas); }
+button,input,select,textarea { font:inherit; }
+button,a { -webkit-tap-highlight-color:transparent; }
+a { color:inherit; text-decoration:none; }
+img { display:block; max-width:100%; }
+:focus-visible { outline:2px solid var(--olive); outline-offset:3px; }
+.font-editorial { font-family:"Instrument Serif",Georgia,serif; font-weight:400; }
+.container-shell { width:min(100% - 2rem, 1440px); margin-inline:auto; }
+.glass { background:color-mix(in srgb,var(--ivory) 82%,transparent); backdrop-filter:blur(16px); border:1px solid color-mix(in srgb,var(--border) 72%,transparent); }
+.btn { min-height:42px; display:inline-flex; align-items:center; justify-content:center; gap:.55rem; padding:.65rem 1rem; border-radius:5px; border:1px solid transparent; font-weight:700; font-size:.875rem; cursor:pointer; transition:transform .2s,background .2s,border-color .2s; }
+.btn:hover { transform:translateY(-1px); }
+.btn-primary { background:var(--charcoal); color:var(--ivory); }
+.btn-secondary { border-color:var(--border); background:var(--ivory); }
+.btn-olive { background:var(--olive); color:var(--ivory); }
+.input { width:100%; min-height:44px; border:1px solid var(--border); background:var(--ivory); border-radius:5px; padding:.65rem .8rem; color:var(--charcoal); }
+.card { border:1px solid var(--border); background:var(--ivory); border-radius:7px; }
+.eyebrow { letter-spacing:.15em; text-transform:uppercase; color:var(--olive); font-size:.72rem; font-weight:800; }
+.dark-section { --muted:#C7CBC5; --olive:#C4D1B4; }
+.line-clamp-2 { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+@media (prefers-reduced-motion:reduce) { *,*::before,*::after { scroll-behavior:auto!important; animation-duration:.01ms!important; transition-duration:.01ms!important; } }

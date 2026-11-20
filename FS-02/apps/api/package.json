@@ -1,0 +1,46 @@
+{
+  "name": "@aureva/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "node ../../scripts/clean-directory.mjs dist && esbuild src/index.ts --bundle --platform=node --format=esm --target=node22 --outfile=dist/index.js --sourcemap --packages=external",
+    "start": "node dist/index.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --no-file-parallelism --test-timeout=15000"
+  },
+  "dependencies": {
+    "@aureva/database": "*",
+    "@aureva/shared": "*",
+    "@aws-sdk/client-s3": "^3.1000.0",
+    "@aws-sdk/s3-request-presigner": "^3.1000.0",
+    "@elastic/elasticsearch": "8.17.1",
+    "argon2": "^0.45.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
+    "jose": "^6.2.0",
+    "pdfkit": "^0.17.2",
+    "pino": "^10.1.0",
+    "pino-http": "^11.0.0",
+    "redis": "^5.11.0",
+    "stripe": "^20.4.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.5",
+    "@types/node": "^24.10.1",
+    "@types/pdfkit": "^0.17.4",
+    "@types/supertest": "^6.0.3",
+    "supertest": "^7.1.4",
+    "tsx": "^4.20.6",
+    "typescript": "6.0.2",
+    "vitest": "5.1.0"
+  }
+}

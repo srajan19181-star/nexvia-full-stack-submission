@@ -1,0 +1,27 @@
+export const activityActions = {
+  workspaceCreated: "workspace.created",
+  workspaceRenamed: "workspace.renamed",
+  memberInvited: "member.invited",
+  invitationAccepted: "invitation.accepted",
+  invitationRejected: "invitation.rejected",
+  invitationRevoked: "invitation.revoked",
+  memberPermissionChanged: "member.permission_changed",
+  memberRemoved: "member.removed",
+  pageCreated: "page.created",
+  pageRenamed: "page.renamed",
+  pageMoved: "page.moved",
+  pageDeleted: "page.deleted",
+  pageRestored: "page.restored",
+  pageFavorited: "page.favorited",
+  pagePermissionChanged: "page.permission_changed",
+  pagePermissionRemoved: "page.permission_removed",
+  commentCreated: "comment.created",
+  commentReplied: "comment.replied",
+  commentResolved: "comment.resolved",
+  commentReopened: "comment.reopened",
+  commentDeleted: "comment.deleted",
+  revisionCreated: "revision.created",
+  revisionRestored: "revision.restored",
+} as const;
+
+export type ActivityAction = (typeof activityActions)[keyof typeof activityActions];

@@ -1,0 +1,359 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ThemePreference {
+  SYSTEM
+  LIGHT
+  DARK
+}
+
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum ContentRole {
+  EDITOR
+  COMMENTER
+  VIEWER
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  REVOKED
+  EXPIRED
+}
+
+enum CommentAnchorStatus {
+  ATTACHED
+  ORPHANED
+}
+
+enum SnapshotKind {
+  PERIODIC
+  MILESTONE
+  PRE_RESTORE
+  RESTORE
+}
+
+model User {
+  id                     String                @id @default(cuid())
+  email                  String                @unique
+  name                   String
+  passwordHash           String
+  avatarUrl              String?
+  theme                  ThemePreference       @default(SYSTEM)
+  emailVerifiedAt        DateTime?
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+  sessions               Session[]
+  passwordResetTokens    PasswordResetToken[]
+  memberships            WorkspaceMember[]
+  createdWorkspaces      Workspace[]           @relation("WorkspaceCreator")
+  sentInvitations        WorkspaceInvitation[] @relation("InvitationSender")
+  acceptedInvitations    WorkspaceInvitation[] @relation("InvitationAcceptor")
+  createdPages           Page[]                @relation("PageCreator")
+  updatedPages           Page[]                @relation("PageUpdater")
+  deletedPages           Page[]                @relation("PageDeleter")
+  favorites              PageFavorite[]
+  documentUpdates        DocumentUpdate[]      @relation("DocumentUpdateActor")
+  comments               Comment[]             @relation("CommentAuthor")
+  resolvedComments       Comment[]             @relation("CommentResolver")
+  deletedComments        Comment[]             @relation("CommentDeleter")
+  commentReplies         CommentReply[]        @relation("CommentReplyAuthor")
+  deletedCommentReplies  CommentReply[]        @relation("CommentReplyDeleter")
+  snapshots              DocumentSnapshot[]    @relation("SnapshotAuthor")
+  grantedPagePermissions PagePermission[]      @relation("PermissionGrantor")
+  activities             ActivityLog[]         @relation("ActivityActor")
+
+  @@index([createdAt])
+}
+
+model Session {
+  id         String    @id @default(cuid())
+  userId     String
+  tokenHash  String    @unique
+  userAgent  String?
+  ipAddress  String?
+  expiresAt  DateTime
+  lastSeenAt DateTime  @default(now())
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@index([expiresAt])
+}
+
+model Workspace {
+  id           String                @id @default(cuid())
+  name         String
+  slug         String                @unique
+  createdById  String
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  createdBy    User                  @relation("WorkspaceCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  members      WorkspaceMember[]
+  invitations  WorkspaceInvitation[]
+  pages        Page[]
+  activityLogs ActivityLog[]
+
+  @@index([createdById])
+  @@index([name])
+}
+
+model WorkspaceMember {
+  id              String           @id @default(cuid())
+  workspaceId     String
+  userId          String
+  workspaceRole   WorkspaceRole    @default(MEMBER)
+  contentRole     ContentRole      @default(EDITOR)
+  joinedAt        DateTime         @default(now())
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  workspace       Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pagePermissions PagePermission[]
+
+  @@unique([workspaceId, userId])
+  @@index([userId])
+  @@index([workspaceId, workspaceRole])
+}
+
+model WorkspaceInvitation {
+  id            String           @id @default(cuid())
+  workspaceId   String
+  email         String
+  tokenHash     String           @unique
+  workspaceRole WorkspaceRole    @default(MEMBER)
+  contentRole   ContentRole      @default(EDITOR)
+  status        InvitationStatus @default(PENDING)
+  expiresAt     DateTime
+  respondedAt   DateTime?
+  invitedById   String
+  acceptedById  String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  workspace     Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  invitedBy     User             @relation("InvitationSender", fields: [invitedById], references: [id], onDelete: Restrict)
+  acceptedBy    User?            @relation("InvitationAcceptor", fields: [acceptedById], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, status])
+  @@index([email, status])
+  @@index([expiresAt])
+}
+
+model Page {
+  id              String               @id @default(cuid())
+  workspaceId     String
+  parentId        String?
+  title           String               @default("Untitled")
+  icon            String?
+  coverUrl        String?
+  sortOrder       Int                  @default(0)
+  createdById     String
+  updatedById     String?
+  deletedById     String?
+  deletedAt       DateTime?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  workspace       Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  parent          Page?                @relation("PageTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children        Page[]               @relation("PageTree")
+  createdBy       User                 @relation("PageCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  updatedBy       User?                @relation("PageUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+  deletedBy       User?                @relation("PageDeleter", fields: [deletedById], references: [id], onDelete: SetNull)
+  documentState   DocumentState?
+  documentUpdates DocumentUpdate[]
+  comments        Comment[]
+  snapshots       DocumentSnapshot[]
+  permissions     PagePermission[]
+  favorites       PageFavorite[]
+  searchIndex     DocumentSearchIndex?
+  activityLogs    ActivityLog[]
+
+  @@index([workspaceId, parentId, sortOrder])
+  @@index([workspaceId, deletedAt])
+  @@index([workspaceId, title])
+}
+
+model PageFavorite {
+  userId    String
+  pageId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@id([userId, pageId])
+  @@index([pageId])
+}
+
+model PagePermission {
+  id          String          @id @default(cuid())
+  pageId      String
+  memberId    String
+  role        ContentRole
+  grantedById String
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  page        Page            @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  member      WorkspaceMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  grantedBy   User            @relation("PermissionGrantor", fields: [grantedById], references: [id], onDelete: Restrict)
+
+  @@unique([pageId, memberId])
+  @@index([memberId])
+}
+
+model DocumentState {
+  id                       String    @id @default(cuid())
+  pageId                   String    @unique
+  generation               Int       @default(1)
+  state                    Bytes
+  stateVector              Bytes
+  version                  BigInt    @default(0)
+  compactedThroughUpdateId BigInt?
+  lastCompactedAt          DateTime?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+  page                     Page      @relation(fields: [pageId], references: [id], onDelete: Cascade)
+}
+
+model DocumentUpdate {
+  id         BigInt   @id @default(autoincrement())
+  pageId     String
+  generation Int
+  update     Bytes
+  updateHash String
+  actorId    String?
+  instanceId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  page       Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  actor      User?    @relation("DocumentUpdateActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@unique([pageId, generation, updateHash])
+  @@index([pageId, generation, id])
+  @@index([createdAt])
+}
+
+model DocumentSnapshot {
+  id             String             @id @default(cuid())
+  pageId         String
+  generation     Int
+  state          Bytes
+  stateVector    Bytes
+  updateId       BigInt?
+  kind           SnapshotKind       @default(PERIODIC)
+  label          String?
+  createdById    String?
+  restoredFromId String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  page           Page               @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  createdBy      User?              @relation("SnapshotAuthor", fields: [createdById], references: [id], onDelete: SetNull)
+  restoredFrom   DocumentSnapshot?  @relation("SnapshotRestores", fields: [restoredFromId], references: [id], onDelete: SetNull)
+  restorations   DocumentSnapshot[] @relation("SnapshotRestores")
+
+  @@index([pageId, createdAt])
+  @@index([pageId, generation])
+}
+
+model Comment {
+  id                String              @id @default(cuid())
+  pageId            String
+  authorId          String
+  body              String              @db.Text
+  anchorStart       Bytes?
+  anchorEnd         Bytes?
+  anchorStateVector Bytes?
+  anchorGeneration  Int
+  anchorQuote       String?             @db.Text
+  anchorStatus      CommentAnchorStatus @default(ATTACHED)
+  resolvedAt        DateTime?
+  resolvedById      String?
+  deletedAt         DateTime?
+  deletedById       String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  page              Page                @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  author            User                @relation("CommentAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  resolvedBy        User?               @relation("CommentResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+  deletedBy         User?               @relation("CommentDeleter", fields: [deletedById], references: [id], onDelete: SetNull)
+  replies           CommentReply[]
+
+  @@index([pageId, createdAt])
+  @@index([pageId, resolvedAt])
+}
+
+model CommentReply {
+  id          String    @id @default(cuid())
+  commentId   String
+  authorId    String
+  body        String    @db.Text
+  deletedAt   DateTime?
+  deletedById String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  comment     Comment   @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  author      User      @relation("CommentReplyAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  deletedBy   User?     @relation("CommentReplyDeleter", fields: [deletedById], references: [id], onDelete: SetNull)
+
+  @@index([commentId, createdAt])
+}
+
+model DocumentSearchIndex {
+  id        String   @id @default(cuid())
+  pageId    String   @unique
+  plainText String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+}
+
+model ActivityLog {
+  id          BigInt    @id @default(autoincrement())
+  workspaceId String
+  pageId      String?
+  actorId     String?
+  action      String
+  entityType  String
+  entityId    String?
+  metadata    Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  page        Page?     @relation(fields: [pageId], references: [id], onDelete: SetNull)
+  actor       User?     @relation("ActivityActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, createdAt])
+  @@index([pageId, createdAt])
+  @@index([actorId, createdAt])
+}

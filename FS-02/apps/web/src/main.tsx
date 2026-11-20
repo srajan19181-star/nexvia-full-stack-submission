@@ -1,0 +1,10 @@
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ErrorBoundary } from "react-error-boundary";
+import { Toaster } from "sonner";
+import { App } from "./app";
+import { AuthProvider } from "./lib/auth";
+import "./styles.css";
+const queryClient=new QueryClient({defaultOptions:{queries:{staleTime:30_000,retry:1}}});
+createRoot(document.getElementById("root")!).render(<StrictMode><ErrorBoundary fallback={<div className="container-shell py-20"><h1 className="font-editorial text-5xl">Something went wrong.</h1><p className="mt-4">Refresh the page or return home.</p></div>}><QueryClientProvider client={queryClient}><AuthProvider><App/><Toaster position="bottom-right" richColors/></AuthProvider></QueryClientProvider></ErrorBoundary></StrictMode>);

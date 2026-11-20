@@ -1,0 +1,138 @@
+name: orvyn
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-nexvia}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nexvia_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-nexvia}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres-init.sql:/docker-entrypoint-initdb.d/10-test-database.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  migrate:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+      target: migration
+    restart: "no"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-nexvia}:${POSTGRES_PASSWORD:-nexvia_dev_password}@postgres:5432/${POSTGRES_DB:-nexvia}?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  collaboration:
+    build:
+      context: .
+      dockerfile: docker/collaboration.Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-nexvia}:${POSTGRES_PASSWORD:-nexvia_dev_password}@postgres:5432/${POSTGRES_DB:-nexvia}?schema=public
+      REDIS_URL: redis://redis:6379
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:5173}
+      SESSION_COOKIE_NAME: ${SESSION_COOKIE_NAME:-nexvia_session}
+      SESSION_SECRET: ${SESSION_SECRET:-local-session-secret-change-before-production-1234}
+      COLLABORATION_INTERNAL_SECRET: ${COLLABORATION_INTERNAL_SECRET:-local-collaboration-secret-change-before-prod}
+      COLLABORATION_HOST: 0.0.0.0
+      COLLABORATION_PORT: 4001
+      COLLABORATION_REDIS_CHANNEL_PREFIX: ${COLLABORATION_REDIS_CHANNEL_PREFIX:-nexvia:collaboration}
+    ports:
+      - "4001:4001"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4001/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-nexvia}:${POSTGRES_PASSWORD:-nexvia_dev_password}@postgres:5432/${POSTGRES_DB:-nexvia}?schema=public
+      API_HOST: 0.0.0.0
+      API_PORT: 4000
+      APP_URL: ${APP_URL:-http://localhost:5173}
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:5173}
+      SESSION_COOKIE_NAME: ${SESSION_COOKIE_NAME:-nexvia_session}
+      SESSION_TTL_DAYS: ${SESSION_TTL_DAYS:-30}
+      SESSION_SECRET: ${SESSION_SECRET:-local-session-secret-change-before-production-1234}
+      CSRF_SECRET: ${CSRF_SECRET:-local-csrf-secret-change-before-production-123}
+      COLLABORATION_INTERNAL_URL: http://collaboration:4001
+      COLLABORATION_INTERNAL_SECRET: ${COLLABORATION_INTERNAL_SECRET:-local-collaboration-secret-change-before-prod}
+      TRUST_PROXY: ${TRUST_PROXY:-false}
+      MAIL_TRANSPORT: ${MAIL_TRANSPORT:-log}
+      MAIL_FROM: ${MAIL_FROM:-Orvyn Workspace <no-reply@example.test>}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+    ports:
+      - "4000:4000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      collaboration:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4000/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:4000/api/v1}
+        VITE_COLLABORATION_URL: ${VITE_COLLABORATION_URL:-ws://localhost:4001/collaboration}
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      api:
+        condition: service_healthy
+      collaboration:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:

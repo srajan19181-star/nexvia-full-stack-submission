@@ -1,0 +1,41 @@
+{
+  "name": "nexvia-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22.12.0",
+    "npm": ">=10.0.0"
+  },
+  "scripts": {
+    "dev": "concurrently --kill-others-on-fail --names web,api,collab --prefix-colors cyan,magenta,yellow \"npm run dev -w @nexvia/web\" \"npm run dev -w @nexvia/api\" \"npm run dev -w @nexvia/collaboration\"",
+    "build": "npm run build:packages && npm run build -w @nexvia/api && npm run build -w @nexvia/collaboration && npm run build -w @nexvia/web",
+    "build:packages": "npm run build -w @nexvia/shared && npm run build -w @nexvia/database",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "test:coverage": "npm run test:coverage --workspaces --if-present",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:production-smoke": "playwright test tests/e2e/production-smoke.spec.ts --config=playwright.production.config.ts",
+    "test:load": "node tests/load/collaboration-load.mjs",
+    "test:load:sample": "node scripts/run-load-sample.mjs",
+    "db:generate": "npm run db:generate -w @nexvia/database",
+    "db:migrate": "npm run db:migrate -w @nexvia/database",
+    "db:migrate:deploy": "npm run db:migrate:deploy -w @nexvia/database",
+    "db:seed": "npm run db:seed -w @nexvia/database",
+    "db:studio": "npm run db:studio -w @nexvia/database",
+    "services:up": "docker compose up -d postgres redis",
+    "services:down": "docker compose down",
+    "check": "npm run typecheck && npm run test && npm run build"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "concurrently": "^9.2.1",
+    "esbuild": "0.28.2",
+    "typescript": "^7.0.2"
+  }
+}
