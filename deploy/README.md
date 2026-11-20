@@ -81,6 +81,8 @@ POSTGRES_DB=aureva
 JWT_ACCESS_SECRET=<different-new-hex-secret>
 JWT_REFRESH_SECRET=<different-new-hex-secret>
 COOKIE_SECRET=<different-new-hex-secret>
+CARRIER_WEBHOOK_SECRET=<different-new-hex-secret>
+SEED_DEMO_PASSWORD=<private-password-with-at-least-12-characters>
 TRUST_PROXY_HOPS=1
 VITE_API_URL=https://aureva.example.com/api/v1
 S3_PUBLIC_ENDPOINT=https://files.aureva.example.com
@@ -88,7 +90,7 @@ STRIPE_CONNECT_RETURN_URL=https://aureva.example.com/vendor-portal/payouts?conne
 STRIPE_CONNECT_REFRESH_URL=https://aureva.example.com/vendor-portal/payouts?connect=refresh
 ```
 
-Start and seed the isolated evaluation environment:
+Start and seed the isolated evaluation environment. The seeded customer, vendor, and administrator accounts all use the private `SEED_DEMO_PASSWORD`; do not publish it in the repository or screenshots.
 
 ```bash
 docker compose up -d --build

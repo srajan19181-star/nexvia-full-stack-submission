@@ -3,7 +3,14 @@ import { config } from "dotenv";
 config({ path: "../../.env" });
 const { prisma } = await import("../src/index");
 
-const passwordHash = await argon2.hash("AurevaDemo2026!", { type: argon2.argon2id });
+const configuredSeedPassword = process.env.SEED_DEMO_PASSWORD?.trim();
+if (process.env.NODE_ENV === "production" && !configuredSeedPassword) {
+  throw new Error("SEED_DEMO_PASSWORD is required when seeding a production environment");
+}
+if (configuredSeedPassword && configuredSeedPassword.length < 12) {
+  throw new Error("SEED_DEMO_PASSWORD must contain at least 12 characters");
+}
+const passwordHash = await argon2.hash(configuredSeedPassword ?? "AurevaDemo2026!", { type: argon2.argon2id });
 const admin = await prisma.user.upsert({ where: { email: "admin@aureva.local" }, update: {}, create: { email: "admin@aureva.local", name: "Aureva Admin", passwordHash, roles: ["CUSTOMER", "ADMIN"], emailVerifiedAt: new Date(), customerProfile: { create: {} }, wishlist: { create: {} } } });
 const customer = await prisma.user.upsert({ where: { email: "customer@aureva.local" }, update: {}, create: { email: "customer@aureva.local", name: "Mira Kapoor", passwordHash, roles: ["CUSTOMER"], emailVerifiedAt: new Date(), customerProfile: { create: { phone: "+919876543210" } }, wishlist: { create: {} }, addresses: { create: { label: "Home", name: "Mira Kapoor", line1: "14 Garden Avenue", city: "Bengaluru", state: "Karnataka", postalCode: "560001", countryCode: "IN", phone: "+919876543210", isDefault: true } } } });
 const vendorOwner = await prisma.user.upsert({ where: { email: "vendor@aureva.local" }, update: {}, create: { email: "vendor@aureva.local", name: "Arjun Mehta", passwordHash, roles: ["CUSTOMER", "VENDOR"], emailVerifiedAt: new Date(), customerProfile: { create: {} }, wishlist: { create: {} } } });
