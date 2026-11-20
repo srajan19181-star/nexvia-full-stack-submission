@@ -2,20 +2,23 @@ name: aureva
 services:
   postgres:
     image: postgres:16-alpine
-    environment: { POSTGRES_USER: aureva, POSTGRES_PASSWORD: aureva_dev_password, POSTGRES_DB: aureva }
-    ports: ["5433:5432"]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-aureva}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aureva_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-aureva}
+    ports: ["127.0.0.1:5433:5432"]
     volumes: ["postgres_data:/var/lib/postgresql/data"]
-    healthcheck: { test: ["CMD-SHELL", "pg_isready -U aureva -d aureva"], interval: 5s, timeout: 5s, retries: 15 }
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"], interval: 5s, timeout: 5s, retries: 15 }
   redis:
     image: redis:7.4-alpine
     command: ["redis-server", "--appendonly", "yes"]
-    ports: ["6380:6379"]
+    ports: ["127.0.0.1:6380:6379"]
     volumes: ["redis_data:/data"]
     healthcheck: { test: ["CMD", "redis-cli", "ping"], interval: 5s, timeout: 3s, retries: 15 }
   elasticsearch:
     image: elasticsearch:8.17.4
     environment: ["discovery.type=single-node", "xpack.security.enabled=false", "ES_JAVA_OPTS=-Xms256m -Xmx256m"]
-    ports: ["9201:9200"]
+    ports: ["127.0.0.1:9201:9200"]
     volumes: ["elasticsearch_data:/usr/share/elasticsearch/data"]
     healthcheck: { test: ["CMD-SHELL", "curl -fs http://localhost:9200/_cluster/health || exit 1"], interval: 10s, timeout: 5s, retries: 20 }
   s3mock:
@@ -25,14 +28,19 @@ services:
       COM_ADOBE_TESTING_S3MOCK_STORE_ROOT: /s3mockroot
       COM_ADOBE_TESTING_S3MOCK_STORE_RETAIN_FILES_ON_EXIT: "true"
     mem_limit: 512m
-    ports: ["9000:9090"]
+    ports: ["127.0.0.1:9000:9090"]
     volumes: ["s3mock_data:/s3mockroot"]
     healthcheck: { test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/favicon.ico"], interval: 5s, timeout: 5s, retries: 30 }
   api:
     build: { context: ., dockerfile: docker/api.Dockerfile }
     env_file: [.env]
-    environment: { DATABASE_URL: "postgresql://aureva:aureva_dev_password@postgres:5432/aureva", REDIS_URL: "redis://redis:6379", ELASTICSEARCH_URL: "http://elasticsearch:9200", S3_INTERNAL_ENDPOINT: "http://s3mock:9090", S3_PUBLIC_ENDPOINT: "http://localhost:9000" }
-    ports: ["4100:4100"]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-aureva}:${POSTGRES_PASSWORD:-aureva_dev_password}@postgres:5432/${POSTGRES_DB:-aureva}
+      REDIS_URL: redis://redis:6379
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      S3_INTERNAL_ENDPOINT: http://s3mock:9090
+      S3_PUBLIC_ENDPOINT: ${S3_PUBLIC_ENDPOINT:-http://localhost:9000}
+    ports: ["127.0.0.1:4100:4100"]
     depends_on:
       migrate: { condition: service_completed_successfully }
       redis: { condition: service_healthy }
@@ -42,12 +50,18 @@ services:
   migrate:
     build: { context: ., dockerfile: docker/api.Dockerfile, target: migration }
     env_file: [.env]
-    environment: { DATABASE_URL: "postgresql://aureva:aureva_dev_password@postgres:5432/aureva" }
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-aureva}:${POSTGRES_PASSWORD:-aureva_dev_password}@postgres:5432/${POSTGRES_DB:-aureva}
     depends_on: { postgres: { condition: service_healthy } }
     restart: "no"
   web:
-    build: { context: ., dockerfile: docker/web.Dockerfile, args: { VITE_API_URL: "http://localhost:4100/api/v1", VITE_STRIPE_PUBLISHABLE_KEY: "${VITE_STRIPE_PUBLISHABLE_KEY:-}" } }
-    ports: ["5174:80"]
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:4100/api/v1}
+        VITE_STRIPE_PUBLISHABLE_KEY: ${VITE_STRIPE_PUBLISHABLE_KEY:-}
+    ports: ["127.0.0.1:5174:80"]
     depends_on: { api: { condition: service_healthy } }
     healthcheck: { test: ["CMD", "wget", "-qO-", "http://127.0.0.1/healthz"], interval: 10s, timeout: 3s, retries: 10 }
 volumes: { postgres_data: {}, redis_data: {}, elasticsearch_data: {}, s3mock_data: {} }

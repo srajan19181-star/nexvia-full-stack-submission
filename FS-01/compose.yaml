@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nexvia_dev_password}
       POSTGRES_DB: ${POSTGRES_DB:-nexvia}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres-init.sql:/docker-entrypoint-initdb.d/10-test-database.sql:ro
@@ -25,7 +25,7 @@ services:
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec"]
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -65,7 +65,7 @@ services:
       COLLABORATION_PORT: 4001
       COLLABORATION_REDIS_CHANNEL_PREFIX: ${COLLABORATION_REDIS_CHANNEL_PREFIX:-nexvia:collaboration}
     ports:
-      - "4001:4001"
+      - "127.0.0.1:4001:4001"
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -105,7 +105,7 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
     ports:
-      - "4000:4000"
+      - "127.0.0.1:4000:4000"
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -126,7 +126,7 @@ services:
         VITE_COLLABORATION_URL: ${VITE_COLLABORATION_URL:-ws://localhost:4001/collaboration}
     restart: unless-stopped
     ports:
-      - "5173:80"
+      - "127.0.0.1:5173:80"
     depends_on:
       api:
         condition: service_healthy

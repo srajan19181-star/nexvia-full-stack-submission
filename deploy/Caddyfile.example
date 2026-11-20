@@ -1,0 +1,30 @@
+orvyn.example.com {
+	@api path /api/*
+	handle @api {
+		reverse_proxy 127.0.0.1:4000
+	}
+
+	@collaboration path /collaboration*
+	handle @collaboration {
+		reverse_proxy 127.0.0.1:4001
+	}
+
+	handle {
+		reverse_proxy 127.0.0.1:5173
+	}
+}
+
+aureva.example.com {
+	@api path /api/*
+	handle @api {
+		reverse_proxy 127.0.0.1:4100
+	}
+
+	handle {
+		reverse_proxy 127.0.0.1:5174
+	}
+}
+
+files.aureva.example.com {
+	reverse_proxy 127.0.0.1:9000
+}

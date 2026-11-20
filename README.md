@@ -9,6 +9,8 @@ This public repository contains both allotted production-minded full-stack proje
 
 Both projects include real persistence, secure authentication, role-based authorization, production Docker images, database migrations, seed data, automated tests, responsive interfaces, health checks, and detailed technical documentation. Neither project is a static mockup.
 
+For a single-server HTTPS deployment of both projects, follow the [live deployment guide](deploy/README.md) and use the provided [Caddy routing template](deploy/Caddyfile.example).
+
 ## Submission Checklist
 
 | Project | Working demo | Technical package | Presentation | Reflection |
