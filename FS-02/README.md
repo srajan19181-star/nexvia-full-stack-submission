@@ -2,6 +2,14 @@
 
 AUREVA is a production-oriented multi-vendor marketplace monorepo. It provides a responsive React storefront, customer cart and checkout flow, vendor operations, admin moderation, secure cookie authentication, PostgreSQL persistence, Redis caching, Elasticsearch projection, S3 presigned uploads, Stripe test-mode boundaries, PDF invoices, automated tests, and Docker deployment.
 
+## Submission Package
+
+- [Complete deliverables index](docs/submission-deliverables.md)
+- [Working demo recording](docs/demos/aureva-working-demo.webm)
+- [Architecture](docs/architecture.md), [ER diagram](docs/er-diagram.md), and [API reference](docs/api.md)
+- [Test results](docs/test-report.md) and [measured performance](docs/performance.md)
+- [Ten-minute presentation](docs/presentation.md) and [individual reflection](docs/individual-reflection.md)
+
 ## Architecture
 
 - `apps/web` — React 19, TypeScript, Vite, Tailwind CSS, Motion, GSAP, TanStack Query, React Hook Form.

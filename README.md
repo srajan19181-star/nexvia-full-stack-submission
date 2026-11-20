@@ -9,6 +9,13 @@ This public repository contains both allotted production-minded full-stack proje
 
 Both projects include real persistence, secure authentication, role-based authorization, production Docker images, database migrations, seed data, automated tests, responsive interfaces, health checks, and detailed technical documentation. Neither project is a static mockup.
 
+## Submission Checklist
+
+| Project | Working demo | Technical package | Presentation | Reflection |
+| --- | --- | --- | --- | --- |
+| Orvyn | [Screen recording](FS-01/docs/demos/orvyn-working-demo.webm) | [Deliverables index](FS-01/docs/submission-deliverables.md) | [10-minute outline](FS-01/docs/presentation-outline.md) | [Individual reflection](FS-01/docs/individual-reflection.md) |
+| AUREVA | [Screen recording](FS-02/docs/demos/aureva-working-demo.webm) | [Deliverables index](FS-02/docs/submission-deliverables.md) | [10-minute outline](FS-02/docs/presentation.md) | [Individual reflection](FS-02/docs/individual-reflection.md) |
+
 ## Repository Structure
 
 ```text
@@ -148,6 +155,5 @@ These are reproducible local development results, not production capacity claims
 
 ## Documentation Index
 
-- Orvyn: [README](FS-01/README.md) · [Architecture](FS-01/docs/architecture.md) · [API](FS-01/docs/api-reference.md) · [WebSocket protocol](FS-01/docs/websocket-protocol.md) · [Deployment](FS-01/docs/deployment.md) · [Testing](FS-01/docs/testing.md)
-- AUREVA: [README](FS-02/README.md) · [Architecture](FS-02/docs/architecture.md) · [ER diagram](FS-02/docs/er-diagram.md) · [API](FS-02/docs/api.md) · [Deployment](FS-02/docs/deployment.md) · [Testing](FS-02/docs/testing.md)
-
+- Orvyn: [Deliverables](FS-01/docs/submission-deliverables.md) · [README](FS-01/README.md) · [Architecture](FS-01/docs/architecture.md) · [API](FS-01/docs/api-reference.md) · [WebSocket protocol](FS-01/docs/websocket-protocol.md) · [Deployment](FS-01/docs/deployment.md) · [Testing](FS-01/docs/testing.md)
+- AUREVA: [Deliverables](FS-02/docs/submission-deliverables.md) · [README](FS-02/README.md) · [Architecture](FS-02/docs/architecture.md) · [ER diagram](FS-02/docs/er-diagram.md) · [API](FS-02/docs/api.md) · [Deployment](FS-02/docs/deployment.md) · [Testing](FS-02/docs/testing.md)

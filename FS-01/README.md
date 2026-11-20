@@ -2,6 +2,14 @@
 
 Orvyn is a production-minded real-time workspace built with React, Express, PostgreSQL, Prisma, TipTap, Yjs, Redis, and strict TypeScript. It provides secure cookie sessions, nested workspaces and pages, convergent collaborative editing, awareness presence, anchored comments, immutable history, sharing controls, audit activity, and full-stack container deployment.
 
+## Submission Package
+
+- [Complete deliverables index](docs/submission-deliverables.md)
+- [Working demo recording](docs/demos/orvyn-working-demo.webm)
+- [Architecture](docs/architecture.md), [data model](docs/data-model.md), [API](docs/api-reference.md), and [WebSocket protocol](docs/websocket-protocol.md)
+- [Test and load results](docs/test-report-2026-11-17.md)
+- [Ten-minute presentation](docs/presentation-outline.md) and [individual reflection](docs/individual-reflection.md)
+
 ## Architecture
 
 ```text
@@ -96,4 +104,4 @@ See [testing guide](docs/testing.md), [measured local report](docs/test-report-2
 
 ## Delivery records
 
-Milestones 1–7 are documented in `docs/milestone-*-report.md`. Presentation and reflection templates are available in [presentation outline](docs/presentation-outline.md) and [reflection template](docs/reflection-template.md).
+Milestones 1–7 are documented in `docs/milestone-*-report.md`. The final submission evidence is collected in the [deliverables index](docs/submission-deliverables.md); reusable templates remain available in the [test report template](docs/test-report-template.md) and [reflection template](docs/reflection-template.md).
