@@ -2,6 +2,7 @@ name: aureva
 services:
   postgres:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-aureva}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aureva_dev_password}
@@ -11,18 +12,21 @@ services:
     healthcheck: { test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"], interval: 5s, timeout: 5s, retries: 15 }
   redis:
     image: redis:7.4-alpine
+    restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
     ports: ["127.0.0.1:6380:6379"]
     volumes: ["redis_data:/data"]
     healthcheck: { test: ["CMD", "redis-cli", "ping"], interval: 5s, timeout: 3s, retries: 15 }
   elasticsearch:
     image: elasticsearch:8.17.4
+    restart: unless-stopped
     environment: ["discovery.type=single-node", "xpack.security.enabled=false", "ES_JAVA_OPTS=-Xms256m -Xmx256m"]
     ports: ["127.0.0.1:9201:9200"]
     volumes: ["elasticsearch_data:/usr/share/elasticsearch/data"]
     healthcheck: { test: ["CMD-SHELL", "curl -fs http://localhost:9200/_cluster/health || exit 1"], interval: 10s, timeout: 5s, retries: 20 }
   s3mock:
     image: adobe/s3mock@sha256:ab01a6946750f451ca215a47e91030695b260e4003b8a5a6201d25029b8fca92
+    restart: unless-stopped
     environment:
       COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS: aureva-products
       COM_ADOBE_TESTING_S3MOCK_STORE_ROOT: /s3mockroot
@@ -33,6 +37,7 @@ services:
     healthcheck: { test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/favicon.ico"], interval: 5s, timeout: 5s, retries: 30 }
   api:
     build: { context: ., dockerfile: docker/api.Dockerfile }
+    restart: unless-stopped
     env_file: [.env]
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-aureva}:${POSTGRES_PASSWORD:-aureva_dev_password}@postgres:5432/${POSTGRES_DB:-aureva}
@@ -55,6 +60,7 @@ services:
     depends_on: { postgres: { condition: service_healthy } }
     restart: "no"
   web:
+    restart: unless-stopped
     build:
       context: .
       dockerfile: docker/web.Dockerfile
