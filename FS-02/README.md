@@ -19,17 +19,15 @@ Prerequisites: Node.js 22+, npm 10+, Docker Desktop.
 
 ```bash
 cp .env.example .env
-npm install
-docker compose up -d postgres redis
+npm ci
 npm run db:generate
-npm run db:migrate:deploy
+docker compose up -d --build
 npm run db:seed
-npm run dev
 ```
 
 Open `http://localhost:5174`. The API is at `http://localhost:4100`, health at `/health`, and readiness at `/ready`.
 
-Elasticsearch is declared in Compose on port `9201`. The API automatically falls back to indexed PostgreSQL search if Elasticsearch is unavailable. S3-compatible storage and Stripe require the external credentials described in `docs/deployment.md`.
+Compose starts the web, API, one-shot migration job, PostgreSQL, Redis, Elasticsearch, and development-only S3Mock services with health checks. The API automatically falls back to PostgreSQL search if Elasticsearch is unavailable. Real Stripe and production object storage require the external credentials described in `docs/deployment.md`.
 
 ## Demo accounts
 
@@ -37,6 +35,7 @@ Development seed only; all use password `AurevaDemo2026!`:
 
 - Customer: `customer@aureva.local`
 - Approved vendor: `vendor@aureva.local`
+- Second approved vendor: `vendor2@aureva.local`
 - Administrator: `admin@aureva.local`
 
 Never seed these accounts in a production database.
@@ -47,6 +46,8 @@ Never seed these accounts in a production database.
 npm run typecheck             # strict TypeScript
 npm test                      # unit + API integration tests
 npm run test:e2e             # Playwright browser journeys
+npm run test:storage         # S3-compatible upload verification
+npm run test:load            # configurable local HTTP load sample
 npm run build                 # all production builds
 npm run db:migrate            # create development migration
 npm run db:migrate:deploy     # apply committed migrations
@@ -69,8 +70,8 @@ docker compose up --build     # full container stack
 
 ## External configuration
 
-Stripe payment confirmation cannot run until `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` are supplied from a Stripe test account. Presigned uploads require a reachable S3-compatible endpoint and bucket. Tax rules, seller legal details, shipping carriers, email delivery, and payout account onboarding require production providers and jurisdiction-specific configuration; the project does not invent those values.
+Live Stripe payment confirmation requires `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` from a Stripe test account. Local presigned uploads use S3Mock; production requires a real S3-compatible endpoint and bucket. Tax rules, seller legal details, shipping carriers, email delivery, and payout onboarding require production providers and jurisdiction-specific configuration; the project does not invent those values.
 
 ## Current verification
 
-Typecheck, database migrations, seed, unit tests, API integration tests, and production build have been executed locally. See `docs/test-report.md` for the exact result and blocked checks.
+Typecheck, lint, database migrations, seed, 39 unit/integration tests, 5 Playwright journeys, production builds, the full Docker stack, Elasticsearch search, and an S3-compatible upload round trip have been executed locally. See `docs/test-report.md` for exact results and limitations.
